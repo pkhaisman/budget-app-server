@@ -9,16 +9,14 @@ const subcategories = [
         subcategoryId: 1,
         subcategoryName: 'Groceries',
         subcategoryBudgeted: 0,
-        subcategorySpent: 25,
-        subcategoryAvailable: -25,
+        subcategorySpent: -50,
         parentCategoryId: 1
     },
     {
         subcategoryId: 2,
         subcategoryName: 'Dining',
         subcategoryBudgeted: 0,
-        subcategorySpent: 25,
-        subcategoryAvailable: -25,
+        subcategorySpent: -10,
         parentCategoryId: 1
     }
 ]
@@ -29,7 +27,7 @@ subcategoriesRouter
         res.json(subcategories)
     })
     .post(bodyParser, (req, res) => {
-        const { subcategoryId, subcategoryName, parentCategoryId, subcategoryBudgeted, subcategorySpent, subcategoryAvailable } = req.body
+        const { subcategoryId, subcategoryName, parentCategoryId, subcategoryBudgeted, subcategorySpent } = req.body
 
         const requiredFields = [subcategoryName, parentCategoryId]
         requiredFields.forEach(field => {
@@ -44,7 +42,7 @@ subcategoriesRouter
             parentCategoryId, 
             subcategoryBudgeted, 
             subcategorySpent, 
-            subcategoryAvailable
+    
         }
 
         subcategories.push(newSubcategory)
