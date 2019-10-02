@@ -20,8 +20,12 @@ const accounts = [
 
 accountsRouter
     .route('/')
-    .get((req, res) => {
-        res.json(accounts)
+    .get((req, res, next) => {
+        AccountsService.getAllAccounts(req.app.get('db'))
+            .then(accounts => {
+                res.json(accounts)
+            })
+            .catch(next)
     })
     .post(bodyParser, (req, res) => {
         const { accountId, accountName, accountBalance } = req.body
@@ -50,15 +54,19 @@ accountsRouter
 
 accountsRouter
     .route(`/:id`)
-    .get((req, res) => {
-        const { id } = req.params
-        const account = accounts.find(a => a.accountId == id)
-
-        if (!account) {
-            return res.status(404).json('Account not found')
-        }
-
-        res.json(account)
+    .get((req, res, next) => {
+        AccountsService.getById(req.app.get('db'), req.params.id)
+            .then(account => {
+                if (!account) {
+                    return res.status(404).json({
+                        error: {
+                            message: 'Account not found'
+                        }
+                    })
+                }
+                res.json(account)
+            })
+            .catch(next)
     })
     .delete((req, res) => {
         const { id } = req.params

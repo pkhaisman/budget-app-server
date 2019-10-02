@@ -1,5 +1,6 @@
 const express = require('express')
 const uuid = require('uuid/v4')
+const SubcategoriesService = require('./subcategories-service')
 
 const subcategoriesRouter = express.Router()
 const bodyParser = express.json()
@@ -23,8 +24,12 @@ const subcategories = [
 
 subcategoriesRouter
     .route('/')
-    .get((req, res) => {
-        res.json(subcategories)
+    .get((req, res, next) => {
+        SubcategoriesService.getAllSubcategories(req.app.get('db'))
+            .then(subcategories => {
+                res.json(subcategories)
+            })
+            .catch(next)
     })
     .post(bodyParser, (req, res) => {
         const { subcategoryId, subcategoryName, parentCategoryId, subcategoryBudgeted, subcategorySpent } = req.body
@@ -52,15 +57,19 @@ subcategoriesRouter
 
 subcategoriesRouter
     .route('/:id')
-    .get((req, res) => {
-        const { id } = req.params
-        const subcategory = subcategories.find(c => c.subcategoryId == id)
-
-        if (!subcategory) {
-            return res.status(404).json('Category not found')
-        }
-
-        res.json(subcategory)
+    .get((req, res, next) => {
+        SubcategoriesService.getById(req.app.get('db'), req.params.id)
+            .then(subcategory => {
+                if (!subcategory) {
+                    return res.status(404).json({
+                        error: {
+                            message: 'Category not found'
+                        }
+                    })
+                }
+                res.json(subcategory)
+            })
+            .catch(next)
     })
     .delete((req, res) => {
         const { id } = req.params

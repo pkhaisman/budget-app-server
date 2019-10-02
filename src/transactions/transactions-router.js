@@ -1,5 +1,6 @@
 const express = require('express')
 const uuid = require('uuid/v4')
+const TransactionsService = require('./transactions-service')
 
 const transactionsRouter = express.Router()
 const bodyParser = express.json()
@@ -49,8 +50,12 @@ const transactions = [
 
 transactionsRouter
     .route('/')
-    .get((req, res) => {
-        res.json(transactions)
+    .get((req, res, next) => {
+        TransactionsService.getAllTransactions(req.app.get('db'))
+            .then(transactions => {
+                res.json(transactions)
+            })
+            .catch(next)
     })
     .post(bodyParser, (req, res) => {
         const { transactionId, transactionDate, transactionPayee, transactionCategory, transactionMemo, transactionOutflow, transactionInflow, transactionAccountId  } = req.body
@@ -83,15 +88,19 @@ transactionsRouter
 
 transactionsRouter
     .route(`/:id`)
-    .get((req, res) => {
-        const { id } = req.params
-        const transaction = transactions.find(t => t.transactionId == id)
-
-        if (!transaction) {
-            return res.status(404).json('Transaction not found')
-        }
-
-        res.json(transaction)
+    .get((req, res, next) => {
+        TransactionsService.getById(req.app.get('db'), req.params.id)
+            .then(transaction => {
+                if (!transaction) {
+                    return res.status(404).json({
+                        error: {
+                            message: 'Transaction not found'
+                        }
+                    })
+                }
+                res.json(transaction)
+            })
+            .catch(next)
     })
     .delete((req, res) => {
         const { id } = req.params

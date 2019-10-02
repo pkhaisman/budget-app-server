@@ -1,5 +1,6 @@
 const express = require('express')
 const uuid = require('uuid/v4')
+const CategoriesService = require('./categories-service')
 
 const categoriesRouter = express.Router()
 const bodyParser = express.json()
@@ -14,8 +15,12 @@ const categories = [
 
 categoriesRouter
     .route('/')
-    .get((req, res) => {
-        res.json(categories)
+    .get((req, res, next) => {
+        CategoriesService.getAllCategories(req.app.get('db'))
+            .then(categories => {
+                res.json(categories)
+            })
+            .catch(next)
     })
     .post(bodyParser, (req, res) => {
         const { categoryName, categoryId } = req.body
@@ -36,15 +41,19 @@ categoriesRouter
 
 categoriesRouter
     .route('/:id')
-    .get((req, res) => {
-        const { id } = req.params
-        const category = categories.find(c => c.categoryId == id)
-
-        if (!category) {
-            return res.status(404).json('Category not found')
-        }
-
-        res.json(category)
+    .get((req, res, next) => {
+        CategoriesService.getById(req.app.get('db'), req.params.id)
+            .then(category => {
+                if (!category) {
+                    return res.status(404).json({
+                        error: {
+                            message: 'Category not found'
+                        }
+                    })
+                }
+                res.json(category)
+            })
+            .catch(next)
     })
     .delete((req, res) => {
         const { id } = req.params
