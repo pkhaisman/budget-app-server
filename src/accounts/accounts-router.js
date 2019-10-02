@@ -1,5 +1,6 @@
 const express = require('express')
 const uuid = require('uuid/v4')
+const AccountsService = require('../accounts/accounts-service')
 
 const accountsRouter = express.Router()
 const bodyParser = express.json()
