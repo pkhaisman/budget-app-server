@@ -4,6 +4,21 @@ const AccountsService = {
     },
     getById(knex, id) {
         return knex.from('budget_accounts').select('*').where('id', id).first()
+    },
+    addAccount(knex, newAccount) {
+        return knex
+            .insert(newAccount)
+            .into('budget_accounts')
+            .returning('*')
+            .then(rows => {
+                return rows[0];
+            });
+    },
+    deleteAccount(knex, id) {
+        return knex
+            .from('budget_accounts')
+            .where({id})
+            .delete()
     }
 }
 

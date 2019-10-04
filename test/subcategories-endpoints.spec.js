@@ -100,4 +100,108 @@ describe('Categories Endpoints', () => {
             })
         })
     })
+
+    describe(`POST /api/subcategories`, () => {
+        beforeEach(`insert categories`, () => {
+            return db
+                .into('budget_categories')
+                .insert(testCategories)
+        })
+
+        it(`responds with 201 and the new subcategory`, () => {
+            const newSubcategory = {
+                name: 'New Subcategory',
+                budgeted: 0,
+                spent: 0,
+                category_id: 1
+            }
+
+            return supertest(app)
+                .post(`/api/subcategories`)
+                .send(newSubcategory)
+                .expect(res => {
+                    expect(res.body.name).to.eql(newSubcategory.name)
+                    expect(res.body.budgeted).to.eql(newSubcategory.budgeted)
+                    expect(res.body.spent).to.eql(newSubcategory.spent)
+                    expect(res.body.category_id).to.eql(newSubcategory.category_id)
+                    expect(res.body).to.have.property('id')
+                    expect(res.headers.location).to.eql(`/api/subcategories/${res.body.id}`)
+                })
+                .then(res => {
+                    return supertest(app)
+                        .get(`/api/subcategories/${res.body.id}`)
+                        .expect(res.body)
+                })
+        })
+
+        const requiredFields = ['name', 'budgeted', 'spent', 'category_id']
+        requiredFields.forEach(field => {
+            const subcategory = {
+                name: 'New Subcategory',
+                budgeted: 0,
+                spent: 0,
+                category_id: 1
+            }
+
+            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+                delete subcategory[field]
+
+                return supertest(app)
+                    .post(`/api/subcategories`)
+                    .send(subcategory)
+                    .expect(400, {
+                        error: {
+                            message: `Missing '${field}' in request body`
+                        }
+                    })
+            })
+        })
+    })
+
+    describe(`DELETE /api/subcategories/:subcategory_id`, () => {      
+        context(`Given subcategories table has data`, () => {
+            beforeEach('insert data', () => {
+                return db
+                        .into('budget_accounts')
+                        .insert(testAccounts)
+                        .then(() => {
+                            return db
+                                .into('budget_categories')
+                                .insert(testCategories)
+                                .then(() => {
+                                    return db
+                                        .into('budget_subcategories')
+                                        .insert(testSubcategories)
+                                        .then(() => {
+                                            return db
+                                                .into('budget_transactions')
+                                                .insert(testTransactions)
+                                        })
+                                })
+                        })
+            })
+
+            it(`responds with 204 and removes the subcategory`, () => {
+                idToDelete = 2
+                const expectedSubcategories = testSubcategories.filter(s => s.id !== idToDelete)
+                return supertest(app)
+                    .delete(`/api/subcategories/${idToDelete}`)
+                    .expect(204)
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/subcategories`)
+                            .expect(200, expectedSubcategories)
+                    })
+            })
+        })
+
+        context(`Given subcategories table is empty`, () => {
+            it(`responds with 404`, () => {
+                const idToDelete = 9999
+                return supertest(app)
+                    .delete(`/api/subcategories/${idToDelete}`)
+                    .expect(404)
+            })
+        })
+    })
 })

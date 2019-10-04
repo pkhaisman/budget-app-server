@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const uuid = require('uuid/v4')
 const SubcategoriesService = require('./subcategories-service')
@@ -22,6 +23,14 @@ const subcategories = [
     }
 ]
 
+const serializeSubcategory = subcategory => ({
+    id: subcategory.id,
+    name: subcategory.name,
+    budgeted: subcategory.budgeted,
+    spent: subcategory.spent,
+    category_id: subcategory.category_id
+})
+
 subcategoriesRouter
     .route('/')
     .get((req, res, next) => {
@@ -31,28 +40,30 @@ subcategoriesRouter
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        const { subcategoryId, subcategoryName, parentCategoryId, subcategoryBudgeted, subcategorySpent } = req.body
+    .post(bodyParser, (req, res, next) => {
+        const { name, budgeted, spent, category_id } = req.body
+        const newSubcategory = { name, budgeted, spent, category_id }
 
-        const requiredFields = [subcategoryName, parentCategoryId]
-        requiredFields.forEach(field => {
-            if (!field) {
-                res.status(400).json('Invalid data')
+        for (const [key, value] of Object.entries(newSubcategory))
+            if (value == null) {
+                return res.status(400).json({
+                    error: {
+                        message: `Missing '${key}' in request body`
+                    }
+                })
             }
-        })
 
-        const newSubcategory = {
-            subcategoryId,
-            subcategoryName,
-            parentCategoryId, 
-            subcategoryBudgeted, 
-            subcategorySpent, 
-    
-        }
-
-        subcategories.push(newSubcategory)
-
-        res.status(201).json(newSubcategory)
+        SubcategoriesService.addSubcategory(
+            req.app.get('db'),
+            newSubcategory
+        )
+            .then(subcategory => {
+                res
+                    .status(201)
+                    .location(path.posix.join(req.originalUrl, `/${subcategory.id}`))
+                    .json(serializeSubcategory(subcategory))
+            })
+            .catch(next)
     })
 
 subcategoriesRouter
@@ -71,20 +82,22 @@ subcategoriesRouter
             })
             .catch(next)
     })
-    .delete((req, res) => {
-        const { id } = req.params
-        const subcategoryIndex = subcategories.findIndex(c => {
-            console.log(c.subcategoryId, id)
-            return c.subcategoryId == id
-        })
-
-        if (subcategoryIndex === -1) {
-            return res.status(404).json('Not found')
-        }
-
-        subcategories.splice(subcategoryIndex, 1)
-
-        res.status(204).end()
+    .delete((req, res, next) => {
+        SubcategoriesService.deleteSubcategory(
+            req.app.get('db'),
+            req.params.id
+        )
+            .then(subcategory => {
+                if (!subcategory) {
+                    return res.status(404).json({
+                        error: {
+                            message: `Subcategory not found`
+                        }
+                    })
+                }
+                res.status(204).end()
+            })
+            .catch(next)
     })
 
 module.exports = subcategoriesRouter

@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const uuid = require('uuid/v4')
 const CategoriesService = require('./categories-service')
@@ -13,6 +14,11 @@ const categories = [
     }
 ]
 
+const serializeCategory = category => ({
+    id: category.id,
+    name: category.name,
+})
+
 categoriesRouter
     .route('/')
     .get((req, res, next) => {
@@ -22,21 +28,29 @@ categoriesRouter
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        const { categoryName, categoryId } = req.body
+    .post(bodyParser, (req, res, next) => {
+        const { name } = req.body
+        const newCategory = { name }
 
-        if (!categoryName) {
-            res.status(400).json('Invalid data')
+        if (name == null) {
+            return res.status(400).json({
+                error: {
+                    message: `Missing 'name' in request body`
+                }
+            })
         }
 
-        const newCategory = {
-            categoryId,
-            categoryName,
-        }
-
-        categories.push(newCategory)
-
-        res.status(201).json(newCategory)
+        CategoriesService.addCategory(
+            req.app.get('db'),
+            newCategory
+        )
+            .then(category => {
+                res
+                    .status(201)
+                    .location(path.posix.join(req.originalUrl, `/${category.id}`))
+                    .json(serializeCategory(category))
+            })
+            .catch(next)
     })
 
 categoriesRouter
@@ -55,17 +69,22 @@ categoriesRouter
             })
             .catch(next)
     })
-    .delete((req, res) => {
-        const { id } = req.params
-        const categoryIndex = categories.findIndex(c => c.categoryId == id)
-
-        if (categoryIndex === -1) {
-            return res.status(404).json('Not found')
-        }
-
-        categories.splice(categoryIndex, 1)
-
-        res.status(204).end()
+    .delete((req, res, next) => {
+        CategoriesService.deleteCategory(
+            req.app.get('db'),
+            req.params.id
+        )
+            .then(category => {
+                if (!category) {
+                    return res.status(404).json({
+                        error: {
+                            message: `Category not found`
+                        }
+                    })
+                }
+                return res.status(204).end()
+            })
+            .catch(next)
     })
 
 module.exports = categoriesRouter

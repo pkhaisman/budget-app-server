@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const uuid = require('uuid/v4')
 const AccountsService = require('../accounts/accounts-service')
@@ -5,18 +6,11 @@ const AccountsService = require('../accounts/accounts-service')
 const accountsRouter = express.Router()
 const bodyParser = express.json()
 
-const accounts = [
-    {
-        accountId: 1,
-        accountName: 'Citizens Bank',
-        accountBalance: 990,
-    },
-    {
-        accountId: 2,
-        accountName: 'Cash',
-        accountBalance: 990,
-    }
-]
+const serializeAccount = account => ({
+    id: account.id,
+    name: account.name,
+    balance: account.balance
+})
 
 accountsRouter
     .route('/')
@@ -27,29 +21,30 @@ accountsRouter
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        const { accountId, accountName, accountBalance } = req.body
-
-        if (!accountName) {
-            return res.status(400).json('Invalid data')
-        }
-
-        if (!accountBalance) {
-            res.status(400).json('Invalid data')
-        }
-
-        const account = {
-            accountId,
-            accountName,
-            accountBalance
-        }
-
-        accounts.push(account)
-
-        res
-            .status(201)
-            .location(`http://localhost:8000/api/accounts/${accountId}`)
-            .json(account)
+    .post(bodyParser, (req, res, next) => {
+        const { name, balance } = req.body
+        const newAccount = { name, balance }
+        
+        for (const [key, value] of Object.entries(newAccount))
+            if (value == null) {
+                return res.status(400).json({
+                    error: {
+                        message: `Missing '${key}' in request body`
+                    }
+                })
+            }
+        
+        AccountsService.addAccount(
+            req.app.get('db'),
+            newAccount
+        )
+            .then(account => {
+                res
+                    .status(201)
+                    .location(path.posix.join(req.originalUrl, `/${account.id}`))
+                    .json(serializeAccount(account))
+            })
+            .catch(next)
     })
 
 accountsRouter
@@ -68,18 +63,19 @@ accountsRouter
             })
             .catch(next)
     })
-    .delete((req, res) => {
-        const { id } = req.params
-
-        const accountIndex = accounts.findIndex(a => a.accountId == id)
-
-        if (accountIndex === -1) {
-            return res.status(404).json('Not found')
-        }
-
-        accounts.splice(accountIndex, 1)
-
-        res.status(204).end()
+    .delete((req, res, next) => {
+        AccountsService.deleteAccount(req.app.get('db'), req.params.id)
+            .then(account => {
+                if (!account) {
+                    return res.status(404).json({
+                        error: {
+                            message: 'Account not found'
+                        }
+                    })
+                }
+                return res.status(204).end()
+            })
+            .catch(next)
     })
 
 module.exports = accountsRouter

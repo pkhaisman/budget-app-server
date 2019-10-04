@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "migrate": "postgrator --config postgrator-config.js",
     "migrate:test": "env NODE_ENV=test npm run migrate",
+    "seed": "psql -U pkhaisman -d budget-app -f seeds/seed.budget_accounts.sql && psql -U pkhaisman -d budget-app -f seeds/seed.budget_categories.sql && psql -U pkhaisman -d budget-app -f seeds/seed.budget_subcategories.sql && psql -U pkhaisman -d budget-app -f seeds/seed.budget_transactions.sql",
     "start": "node src/server.js",
     "predeploy": "npm audit",
     "deploy": "git push heroku master"
@@ -22,6 +23,7 @@
     "helmet": "^3.21.1",
     "knex": "^0.19.4",
     "morgan": "^1.9.1",
+    "path": "^0.12.7",
     "pg": "^7.12.1",
     "uuid": "^3.3.3"
   },

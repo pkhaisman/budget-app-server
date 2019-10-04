@@ -1,3 +1,5 @@
+DELETE FROM budget_subcategories;
+
 INSERT INTO budget_subcategories (name, budgeted, spent, category_id)
 VALUES
     ('Groceries', 0, 25, 1),

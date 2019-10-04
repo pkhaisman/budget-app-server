@@ -1,10 +1,10 @@
 const knex = require('knex')
 const app = require('../src/app')
-const { makeAccountsArray } = require('./test-helpers')
+const { makeFixtures } = require('./test-helpers')
 
 describe('Accounts Endpoints', () => {
     let db
-    const testAccounts = makeAccountsArray()
+    const { testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
 
     before('make knex instance', () => {
         db = knex({
@@ -73,6 +73,106 @@ describe('Accounts Endpoints', () => {
                     })
             })
         }) 
+    })
+
+    describe(`POST /api/accounts`, () => {
+        it(`responds with 201 and the new account`, () => {
+            const newAccount = {
+                name: 'New Account',
+                balance: 1200,
+            }
+
+            return supertest(app)
+                .post(`/api/accounts`)
+                .send(newAccount)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.name).to.eql(newAccount.name)
+                    expect(res.body.balance).to.eql(newAccount.balance)
+                    expect(res.body).to.have.property('id')
+                    expect(res.headers.location).to.eql(`/api/accounts/${res.body.id}`)
+                })
+                .then(res => {
+                    return supertest(app)
+                        .get(`/api/accounts/${res.body.id}`)
+                        .expect(res.body)
+                })
+        })
+
+        const requiredFields = ['name', 'balance']
+        requiredFields.forEach(field => {
+            const account = {
+                name: 'Capital One',
+                balance: -750
+            }
+
+            it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+                delete account[field]
+
+                return supertest(app)
+                    .post(`/api/accounts`)
+                    .send(account)
+                    .expect(400, {
+                        error: {
+                            message: `Missing '${field}' in request body`
+                        }
+                    })
+            })
+        })
+    })
+
+    describe(`DELETE /api/accounts/:account_id`, () => {
+        context(`Given accounts table has data`, () => {
+            beforeEach('insert transactions', () => {
+                return db
+                    .into('budget_accounts')
+                    .insert(testAccounts)
+                    .then(() => {
+                        return db
+                            .into('budget_categories')
+                            .insert(testCategories)
+                            .then(() => {
+                                return db
+                                    .into('budget_subcategories')
+                                    .insert(testSubcategories)
+                                    .then(() => {
+                                        return db
+                                            .into('budget_transactions')
+                                            .insert(testTransactions)
+                                    })
+                            })
+                    })
+            })
+
+            it(`responds with 204 and removes the account and associated transactions`, () => {
+                const idToDelete = 2
+                const expectedAccounts = testAccounts.filter(a => a.id !== idToDelete)
+                const expectedTransactions = testTransactions.filter(t => t.account_id !== idToDelete)
+                return supertest(app)
+                    .delete(`/api/accounts/${idToDelete}`)
+                    .expect(204)
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/accounts`)
+                            .expect(200, expectedAccounts)
+                    })
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/transactions`)
+                            .expect(200, expectedTransactions)
+                        })
+
+            })
+        })
+
+        context(`Given accounts table is empty`, () => {
+            it(`responds with 404`, () => {
+                const idToDelete = 9999
+                return supertest(app)
+                    .delete(`/api/accounts/${idToDelete}`)
+                    .expect(404)
+            })
+        })
     })
 
 })

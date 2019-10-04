@@ -1,10 +1,10 @@
 const knex = require('knex')
 const app = require('../src/app')
-const { makeCategoriesArray } = require('./test-helpers')
+const { makeFixtures } = require('./test-helpers')
 
 describe('Categories Endpoints', () => {
     let db
-    const testCategories = makeCategoriesArray()
+    const { testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
 
     before('make knex instance', () => {
         db = knex({
@@ -66,6 +66,94 @@ describe('Categories Endpoints', () => {
                 const idToGet = 9999
                 return supertest(app)
                     .get(`/api/categories/${idToGet}`)
+                    .expect(404)
+            })
+        })
+    })
+
+    describe(`POST /api/categories`, () => {
+        it(`responds with 201 and the new category`, () => {
+            const newCategory = {
+                name: 'New Category'
+            }
+
+            return supertest(app)
+                .post(`/api/categories`)
+                .send(newCategory)
+                .expect(201)
+                .expect(res => {
+                    expect(res.body.name).to.eql(newCategory.name)
+                    expect(res.body).to.have.property('id')
+                    expect(res.headers.location).to.eql(`/api/categories/${res.body.id}`)
+                })
+                .then(res => {
+                    return supertest(app)
+                        .get(`/api/categories/${res.body.id}`)
+                        .expect(res.body)
+                })
+        })
+
+        it(`responds with 400 and an error message when 'name' is missing`, () => {
+            const category = {}
+            return supertest(app)
+                .post(`/api/accounts`)
+                .send(category)
+                .expect(400, {
+                    error: {
+                        message: `Missing 'name' in request body`
+                    }
+                })
+        })
+    })
+
+    describe(`DELETE /api/categories/:category_id`, () => {
+        context(`Given categories table has data`, () => {
+            beforeEach('insert transactions', () => {
+                return db
+                    .into('budget_accounts')
+                    .insert(testAccounts)
+                    .then(() => {
+                        return db
+                            .into('budget_categories')
+                            .insert(testCategories)
+                            .then(() => {
+                                return db
+                                    .into('budget_subcategories')
+                                    .insert(testSubcategories)
+                                    .then(() => {
+                                        return db
+                                            .into('budget_transactions')
+                                            .insert(testTransactions)
+                                    })
+                            })
+                    })
+            })
+
+            it(`responds with 204 and removes the category and associated subcategories`, () => {
+                const idToDelete = 2
+                const expectedCategories = testCategories.filter(c => c.id !== idToDelete)
+                const expectedSubcategories = testSubcategories.filter(s => s.category_id !== idToDelete)
+                return supertest(app)
+                    .delete(`/api/categories/${idToDelete}`)
+                    .expect(204)
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/categories`)
+                            .expect(200, expectedCategories)
+                    })
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/subcategories`)
+                            .expect(200, expectedSubcategories)
+                    })
+            })
+        })
+
+        context(`Given categories table is empty`, () => {
+            it(`responds with 404`, () => {
+                const idToDelete = 9999
+                return supertest(app)
+                    .delete(`/api/categories/${idToDelete}`)
                     .expect(404)
             })
         })

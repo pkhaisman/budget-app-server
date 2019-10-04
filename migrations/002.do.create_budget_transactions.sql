@@ -11,7 +11,7 @@ CREATE TABLE budget_transactions (
 ALTER TABLE budget_transactions
     ADD COLUMN
         account_id INT REFERENCES budget_accounts(id)
-        ON DELETE SET NULL;
+        ON DELETE CASCADE NOT NULL;
 
 -- did this work? make it so one must be not null 
 ALTER TABLE budget_transactions
