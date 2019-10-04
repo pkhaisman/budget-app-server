@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const uuid = require('uuid/v4')
 const TransactionsService = require('./transactions-service')
@@ -48,42 +49,59 @@ const transactions = [
     },
 ]
 
+const serializeTransaction = transaction => ({
+    id: transaction.id,
+    date: transaction.date,
+    payee: transaction.payee,
+    memo: transaction.memo,
+    outflow: transaction.outflow,
+    inflow: transaction.inflow,
+    account_id: transaction.account_id,
+    subcategory_id: transaction.subcategory_id
+})
+
 transactionsRouter
     .route('/')
     .get((req, res, next) => {
-        TransactionsService.getAllTransactions(req.app.get('db'))
+        TransactionsService.getAllTransactions(req.app.get('db'), req.query.month, req.query.year)
             .then(transactions => {
                 res.json(transactions)
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        const { transactionId, transactionDate, transactionPayee, transactionCategory, transactionMemo, transactionOutflow, transactionInflow, transactionAccountId  } = req.body
-        
-        const requiredFields = [transactionDate, transactionPayee, transactionCategory, transactionOutflow || transactionInflow, transactionAccountId]  
-        requiredFields.forEach(field => {
-            if (!field) {
-                return res.status(400).json(`Invalid data`)
-            }
-        })
+    .post(bodyParser, (req, res, next) => {
+        const { date, payee, memo, outflow, inflow, account_id, subcategory_id } = req.body
+        const newTransaction = { date, payee, memo, outflow, inflow, account_id, subcategory_id }
 
-        const transaction = {
-            transactionId,
-            transactionDate,
-            transactionPayee,
-            transactionCategory,
-            transactionMemo,
-            transactionOutflow,
-            transactionInflow,
-            transactionAccountId,
+        if (!outflow && !inflow) {
+            return res.status(400).json({
+                error: {
+                    message: `Missing 'outflow' or 'inflow' in request body`
+                }
+            })
+        } else {
+            const requiredFieldsObject = { date, payee, account_id, subcategory_id }
+            for (const [key, value] of Object.entries(requiredFieldsObject))
+            if (value == null) {
+                return res.status(400).json({
+                    error: {
+                        message: `Missing '${key}' in request body`
+                    }
+                })
+            }
         }
 
-        transactions.push(transaction)
-
-        res
-            .status(201)
-            .location(`http://localhost:8000/api/transactions/${transactionId}`)
-            .json(transaction)
+        TransactionsService.addTransaction(
+            req.app.get('db'),
+            newTransaction
+        )
+            .then(transaction => {
+                res
+                    .status(201)
+                    .location(path.posix.join(req.originalUrl, `/${transaction.id}`))
+                    .json(serializeTransaction(transaction))
+            })
+            .catch(next)
     })
 
 transactionsRouter
@@ -102,18 +120,22 @@ transactionsRouter
             })
             .catch(next)
     })
-    .delete((req, res) => {
-        const { id } = req.params
-
-        const transactionIndex = transactions.findIndex(t => t.transactionId == id)
-
-        if (transactionIndex === -1) {
-            return res.status(404).json('Not found')
-        }
-
-        transactions.splice(transactionIndex, 1)
-
-        res.status(204).end()
+    .delete((req, res, next) => {
+        TransactionsService.deleteTransaction(
+            req.app.get('db'),
+            req.params.id
+        )
+            .then(transaction => {
+                if (!transaction) {
+                    return res.status(404).json({
+                        error: {
+                            message: `Transaction not found`
+                        }
+                    })
+                }
+                res.status(204).end()
+            })
+            .catch(next)
     })
 
 module.exports = transactionsRouter

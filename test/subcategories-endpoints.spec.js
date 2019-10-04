@@ -182,7 +182,7 @@ describe('Categories Endpoints', () => {
             })
 
             it(`responds with 204 and removes the subcategory`, () => {
-                idToDelete = 2
+                const idToDelete = 2
                 const expectedSubcategories = testSubcategories.filter(s => s.id !== idToDelete)
                 return supertest(app)
                     .delete(`/api/subcategories/${idToDelete}`)

@@ -105,4 +105,123 @@ describe('Transactions Endpoint', () => {
             })
         })
     })
+
+    describe(`POST /api/transactions`, () => {
+        beforeEach('insert transactions', () => {
+            return db
+                .into('budget_accounts')
+                .insert(testAccounts)
+                .then(() => {
+                    return db
+                        .into('budget_categories')
+                        .insert(testCategories)
+                        .then(() => {
+                            return db
+                                .into('budget_subcategories')
+                                .insert(testSubcategories)
+                        })
+                })
+        })
+
+        it(`responds with 201 and the new transaction`, () => {
+            const newTransaction = {
+                date: '2019-09-29T04:00:00.000Z',
+                payee: 'Reanimator',
+                memo: 'Coffee',
+                outflow: 4,
+                inflow: null,
+                account_id: 1,
+                subcategory_id: 2
+            }
+
+            return supertest(app)
+                .post(`/api/transactions`)
+                .send(newTransaction)
+                .expect(res => {
+                    Object.keys(newTransaction).forEach(key => {
+                        expect(res.body[key]).to.eql(newTransaction[key])
+                    })
+                    expect(res.body).to.have.property('id')
+                    expect(res.headers.location).to.eql(`/api/transactions/${res.body.id}`)
+                })
+                .then(res => {
+                    return supertest(app)
+                        .get(`/api/transactions/${res.body.id}`)
+                        .expect(res.body)
+                })
+        })
+
+        const requiredFields = ['date', 'payee', 'account_id', 'subcategory_id']
+        requiredFields.forEach(field => {
+            const transaction = {
+                date: '2019-09-29T04:00:00.000Z',
+                payee: 'Reanimator',
+                memo: 'Coffee',
+                outflow: 4,
+                inflow: null,
+                account_id: 1,
+                subcategory_id: 2
+            }
+
+            it(`responds with 400 and an error message when '${field}' is missing`, () => {
+                delete transaction[field]
+
+                return supertest(app)
+                    .post(`/api/transactions`)
+                    .send(transaction)
+                    .expect(400, {
+                        error: {
+                            message: `Missing '${field}' in request body`
+                        }
+                    })
+            })
+        })
+    })
+
+    describe(`DELETE /api/transactions/:transaction_id`, () => {
+        context(`Given transactions table has data`, () => {
+            beforeEach('insert transactions', () => {
+                return db
+                    .into('budget_accounts')
+                    .insert(testAccounts)
+                    .then(() => {
+                        return db
+                            .into('budget_categories')
+                            .insert(testCategories)
+                            .then(() => {
+                                return db
+                                    .into('budget_subcategories')
+                                    .insert(testSubcategories)
+                                    .then(() => {
+                                        return db
+                                            .into('budget_transactions')
+                                            .insert(testTransactions)
+                                    })
+                            })
+                    })
+            })
+
+            it(`responds with 204 and removes the transaction`, () => {
+                const idToDelete = 2
+                const expectedTransactions = testTransactions.filter(t => t.id !== idToDelete)
+                return supertest(app)
+                    .delete(`/api/transactions/${idToDelete}`)
+                    .expect(204)
+                    .then(() => {
+                        return supertest(app)
+                            .get(`/api/transactions`)
+                            .expect(200, expectedTransactions)
+                    })
+            })
+        })
+
+        context(`Given transactions table is empty`, () => {
+            it(`responds with 404`, () => {
+                const idToDelete = 9999
+                return supertest(app)
+                    .delete(`/api/transaction/${idToDelete}`)
+                    .expect(404)
+            })
+        })
+    })
 })
