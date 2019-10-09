@@ -40,21 +40,18 @@ function makeSubcategoriesArray(categories) {
             id: 1,
             name: 'Groceries',
             budgeted: 0,
-            spent: 45,
             category_id: categories[0].id,
         },
         {
             id: 2,
             name: 'Dining',
             budgeted: 0,
-            spent: 5,
             category_id: categories[0].id,
         },
         {
             id: 3,
             name: 'Gas',
             budgeted: 0,
-            spent: 30,
             category_id: categories[1].id,
         },
     ]

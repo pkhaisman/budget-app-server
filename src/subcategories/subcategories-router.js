@@ -1,33 +1,14 @@
 const path = require('path')
 const express = require('express')
-const uuid = require('uuid/v4')
 const SubcategoriesService = require('./subcategories-service')
 
 const subcategoriesRouter = express.Router()
 const bodyParser = express.json()
 
-const subcategories = [
-    {
-        subcategoryId: 1,
-        subcategoryName: 'Groceries',
-        subcategoryBudgeted: 0,
-        subcategorySpent: -50,
-        parentCategoryId: 1
-    },
-    {
-        subcategoryId: 2,
-        subcategoryName: 'Dining',
-        subcategoryBudgeted: 0,
-        subcategorySpent: -10,
-        parentCategoryId: 1
-    }
-]
-
 const serializeSubcategory = subcategory => ({
     id: subcategory.id,
     name: subcategory.name,
     budgeted: subcategory.budgeted,
-    spent: subcategory.spent,
     category_id: subcategory.category_id
 })
 
@@ -41,8 +22,8 @@ subcategoriesRouter
             .catch(next)
     })
     .post(bodyParser, (req, res, next) => {
-        const { name, budgeted, spent, category_id } = req.body
-        const newSubcategory = { name, budgeted, spent, category_id }
+        const { name, budgeted, category_id } = req.body
+        const newSubcategory = { name, budgeted, category_id }
 
         for (const [key, value] of Object.entries(newSubcategory))
             if (value == null) {
