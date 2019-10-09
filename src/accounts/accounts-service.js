@@ -19,6 +19,11 @@ const AccountsService = {
             .from('budget_accounts')
             .where({id})
             .delete()
+    },
+    updateAccount(knex, id, newAccountFields) {
+        return knex('budget_accounts')
+            .where({ id })
+            .update(newAccountFields)
     }
 }
 

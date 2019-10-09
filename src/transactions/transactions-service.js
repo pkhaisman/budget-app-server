@@ -1,10 +1,9 @@
 const TransactionsService = {
-    getAllTransactions(knex, month, year) {
+    getAllTransactions(knex) {
         return knex
             .select('*')
             .from('budget_transactions')
-            .where(knex.raw('EXTRACT(MONTH FROM date)'), month)
-            .andWhere(knex.raw('EXTRACT(YEAR FROM date)'), year)
+
     },
     getById(knex, id) {
         return knex.from('budget_transactions').select('*').where('id', id).first()

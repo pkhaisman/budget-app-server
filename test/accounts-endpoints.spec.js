@@ -2,7 +2,7 @@ const knex = require('knex')
 const app = require('../src/app')
 const { makeFixtures } = require('./test-helpers')
 
-describe('Accounts Endpoints', () => {
+describe.only('Accounts Endpoints', () => {
     let db
     const { testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
 
@@ -159,6 +159,7 @@ describe('Accounts Endpoints', () => {
                     .then(() => {
                         return supertest(app)
                             .get(`/api/transactions`)
+                            .query({ month: 9 , year: 2019 })
                             .expect(200, expectedTransactions)
                         })
 
@@ -175,4 +176,23 @@ describe('Accounts Endpoints', () => {
         })
     })
 
+    describe(`PATCH /api/accounts/:account_id`, () => {
+        beforeEach(`insert accounts`, () => {
+            return db
+                .into('budget_accounts')
+                .insert(testAccounts)
+        })
+
+        it(`responds with 204 and updates the account`, () => {
+            const idToUpdate = 2
+            const updatedAccount = {
+                name: 'Credit',
+                balance: -400
+            }
+            return supertest(app)
+                .patch(`/api/accounts/${idToUpdate}`)
+                .send(updatedAccount)
+                .expect(204)
+        })
+    })
 })

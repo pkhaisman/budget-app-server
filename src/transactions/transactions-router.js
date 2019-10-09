@@ -63,7 +63,7 @@ const serializeTransaction = transaction => ({
 transactionsRouter
     .route('/')
     .get((req, res, next) => {
-        TransactionsService.getAllTransactions(req.app.get('db'), req.query.month, req.query.year)
+        TransactionsService.getAllTransactions(req.app.get('db'))
             .then(transactions => {
                 res.json(transactions)
             })

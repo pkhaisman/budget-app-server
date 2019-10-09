@@ -8,7 +8,6 @@ const bodyParser = express.json()
 const serializeSubcategory = subcategory => ({
     id: subcategory.id,
     name: subcategory.name,
-    budgeted: subcategory.budgeted,
     category_id: subcategory.category_id
 })
 
@@ -22,8 +21,8 @@ subcategoriesRouter
             .catch(next)
     })
     .post(bodyParser, (req, res, next) => {
-        const { name, budgeted, category_id } = req.body
-        const newSubcategory = { name, budgeted, category_id }
+        const { name, category_id } = req.body
+        const newSubcategory = { name, category_id }
 
         for (const [key, value] of Object.entries(newSubcategory))
             if (value == null) {

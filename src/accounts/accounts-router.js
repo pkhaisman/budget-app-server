@@ -77,5 +77,18 @@ accountsRouter
             })
             .catch(next)
     })
+    .patch(bodyParser, (req, res, next) => {
+        const { name, balance } = req.body
+        const accountToUpdate = { name, balance }
+        AccountsService.updateAccount(
+            req.app.get('db'),
+            req.params.id,
+            accountToUpdate
+        )
+            .then(numRowsAffected => {
+                res.status(204).end()
+            })
+            .catch(next)
+    })
 
 module.exports = accountsRouter

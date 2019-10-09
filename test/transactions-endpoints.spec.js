@@ -47,6 +47,7 @@ describe('Transactions Endpoint', () => {
             it('responds with 200 and all transactions', () => {
                 return supertest(app)
                     .get('/api/transactions')
+                    .query({ month: 9, year: 2019 })
                     .expect(200, testTransactions)
             })
         })
@@ -55,6 +56,7 @@ describe('Transactions Endpoint', () => {
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
                     .get(`/api/transactions`)
+                    .query({ month: 9, year: 2019 })
                     .expect(200, [])
             })
         })
@@ -210,6 +212,7 @@ describe('Transactions Endpoint', () => {
                     .then(() => {
                         return supertest(app)
                             .get(`/api/transactions`)
+                            .query({ month: 9, year: 2019 })
                             .expect(200, expectedTransactions)
                     })
             })

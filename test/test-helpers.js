@@ -39,19 +39,16 @@ function makeSubcategoriesArray(categories) {
         {
             id: 1,
             name: 'Groceries',
-            budgeted: 0,
             category_id: categories[0].id,
         },
         {
             id: 2,
             name: 'Dining',
-            budgeted: 0,
             category_id: categories[0].id,
         },
         {
             id: 3,
             name: 'Gas',
-            budgeted: 0,
             category_id: categories[1].id,
         },
     ]
@@ -81,7 +78,7 @@ function makeTransactionsArray(accounts, subcategories) {
         },
         {
             id: 3,
-            date: '2019-10-01T00:00:00.000Z',
+            date: '2019-09-01T00:00:00.000Z',
             payee: '',
             memo: 'Whole Foods',
             outflow: 27,
@@ -91,7 +88,7 @@ function makeTransactionsArray(accounts, subcategories) {
         },
         {
             id: 4,
-            date: '2019-10-02T00:00:00.000Z',
+            date: '2019-09-02T00:00:00.000Z',
             payee: '',
             memo: 'TJ',
             outflow: 18,

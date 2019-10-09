@@ -2,7 +2,7 @@ const knex = require('knex')
 const app = require('../src/app')
 const { makeFixtures } = require('./test-helpers')
 
-describe.only('Categories Endpoints', () => {
+describe('Subcategories Endpoints', () => {
     let db
     const { testAccounts, testCategories, testTransactions, testSubcategories } = makeFixtures()
 
@@ -111,7 +111,6 @@ describe.only('Categories Endpoints', () => {
         it(`responds with 201 and the new subcategory`, () => {
             const newSubcategory = {
                 name: 'New Subcategory',
-                budgeted: 0,
                 category_id: 1
             }
 
@@ -120,8 +119,6 @@ describe.only('Categories Endpoints', () => {
                 .send(newSubcategory)
                 .expect(res => {
                     expect(res.body.name).to.eql(newSubcategory.name)
-                    expect(res.body.budgeted).to.eql(newSubcategory.budgeted)
-                    // expect(res.body.spent).to.eql(newSubcategory.spent)
                     expect(res.body.category_id).to.eql(newSubcategory.category_id)
                     expect(res.body).to.have.property('id')
                     expect(res.headers.location).to.eql(`/api/subcategories/${res.body.id}`)
@@ -133,11 +130,10 @@ describe.only('Categories Endpoints', () => {
                 })
         })
 
-        const requiredFields = ['name', 'budgeted', 'category_id']
+        const requiredFields = ['name', 'category_id']
         requiredFields.forEach(field => {
             const subcategory = {
                 name: 'New Subcategory',
-                budgeted: 0,
                 category_id: 1
             }
 

@@ -1,10 +1,10 @@
 DELETE FROM budget_subcategories;
 
-INSERT INTO budget_subcategories (name, budgeted, category_id)
+INSERT INTO budget_subcategories (name, category_id)
 VALUES
-    ('Groceries', 0, 1),
-    ('Dining', 0, 1),
-    ('Health Insurance', 0, 2),
-    ('Jessica', 0, 2),
-    ('Gas', 0, 3),
-    ('Car Insurance', 0, 3);
+    ('Groceries', 2),
+    ('Dining', 2),
+    ('Health Insurance', 3),
+    ('Jessica', 3),
+    ('Gas', 4),
+    ('Car Insurance', 4);
