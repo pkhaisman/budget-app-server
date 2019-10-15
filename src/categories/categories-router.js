@@ -1,18 +1,10 @@
 const path = require('path')
 const express = require('express')
-const uuid = require('uuid/v4')
 const CategoriesService = require('./categories-service')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const categoriesRouter = express.Router()
 const bodyParser = express.json()
-
-const categories = [
-    {
-        categoryId: 1,
-        categoryName: 'Food',
-
-    }
-]
 
 const serializeCategory = category => ({
     id: category.id,
@@ -21,6 +13,7 @@ const serializeCategory = category => ({
 
 categoriesRouter
     .route('/')
+    .all(requireAuth)
     .get((req, res, next) => {
         CategoriesService.getAllCategories(req.app.get('db'))
             .then(categories => {
@@ -40,6 +33,8 @@ categoriesRouter
             })
         }
 
+        newCategory.user_id = req.user.id
+
         CategoriesService.addCategory(
             req.app.get('db'),
             newCategory
@@ -55,6 +50,7 @@ categoriesRouter
 
 categoriesRouter
     .route('/:id')
+    .all(requireAuth)
     .get((req, res, next) => {
         CategoriesService.getById(req.app.get('db'), req.params.id)
             .then(category => {

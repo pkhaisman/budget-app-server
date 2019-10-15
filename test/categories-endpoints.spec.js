@@ -1,10 +1,10 @@
 const knex = require('knex')
 const app = require('../src/app')
-const { makeFixtures } = require('./test-helpers')
+const { makeFixtures, makeAuthHeader } = require('./test-helpers')
 
 describe('Categories Endpoints', () => {
     let db
-    const { testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
+    const { testUsers, testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
 
     before('make knex instance', () => {
         db = knex({
@@ -14,9 +14,9 @@ describe('Categories Endpoints', () => {
         app.set('db', db)
     })
 
-    before('clean tables', () => db.raw('TRUNCATE budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
+    before('clean tables', () => db.raw('TRUNCATE budget_users, budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
     
-    afterEach('clean tables', () => db.raw('TRUNCATE budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
+    afterEach('clean tables', () => db.raw('TRUNCATE budget_users, budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
 
     after('disconnect from db', () => db.destroy())
 
@@ -24,21 +24,34 @@ describe('Categories Endpoints', () => {
         context(`Given categories table has data`, () => {
             beforeEach('insert categories', () => {
                 return db
-                    .into('budget_categories')
-                    .insert(testCategories)
+                    .into('budget_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('budget_categories')
+                            .insert(testCategories)
+                    })
             })
 
             it('responds with 200 and all categories', () => {
                 return supertest(app)
                     .get(`/api/categories`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, testCategories)
             })
         })
 
         context(`Given categories table is empty`, () => {
+            beforeEach('insert categories', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
                     .get(`/api/categories`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, [])
             })
         })
@@ -48,8 +61,13 @@ describe('Categories Endpoints', () => {
         context(`Given categories table has data`, () => {
             beforeEach('insert categories', () => {
                 return db
-                    .into('budget_categories')
-                    .insert(testCategories)
+                    .into('budget_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('budget_categories')
+                            .insert(testCategories)
+                    })
             })
 
             it(`responds with 200 and the specified category`, () => {
@@ -57,28 +75,43 @@ describe('Categories Endpoints', () => {
                 const expectedCategory = testCategories[idToGet - 1]
                 return supertest(app)
                     .get(`/api/categories/${idToGet}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, expectedCategory)
             })
         })
 
         context('Given categories table is empty', () => {
+            beforeEach('insert Users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 404`, () => {
                 const idToGet = 9999
                 return supertest(app)
                     .get(`/api/categories/${idToGet}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404)
             })
         })
     })
 
     describe(`POST /api/categories`, () => {
+        beforeEach('insert Users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+        })
+
         it(`responds with 201 and the new category`, () => {
             const newCategory = {
-                name: 'New Category'
+                name: 'New Category',
             }
 
             return supertest(app)
                 .post(`/api/categories`)
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newCategory)
                 .expect(201)
                 .expect(res => {
@@ -89,7 +122,10 @@ describe('Categories Endpoints', () => {
                 .then(res => {
                     return supertest(app)
                         .get(`/api/categories/${res.body.id}`)
-                        .expect(res.body)
+                        .set('Authorization', makeAuthHeader(testUsers[0]))
+                        .then(res => {
+                            expect(res.body)
+                        })
                 })
         })
 
@@ -97,6 +133,7 @@ describe('Categories Endpoints', () => {
             const category = {}
             return supertest(app)
                 .post(`/api/accounts`)
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(category)
                 .expect(400, {
                     error: {
@@ -110,20 +147,25 @@ describe('Categories Endpoints', () => {
         context(`Given categories table has data`, () => {
             beforeEach('insert transactions', () => {
                 return db
-                    .into('budget_accounts')
-                    .insert(testAccounts)
+                    .into('budget_users')
+                    .insert(testUsers)
                     .then(() => {
                         return db
-                            .into('budget_categories')
-                            .insert(testCategories)
+                            .into('budget_accounts')
+                            .insert(testAccounts)
                             .then(() => {
                                 return db
-                                    .into('budget_subcategories')
-                                    .insert(testSubcategories)
+                                    .into('budget_categories')
+                                    .insert(testCategories)
                                     .then(() => {
                                         return db
-                                            .into('budget_transactions')
-                                            .insert(testTransactions)
+                                            .into('budget_subcategories')
+                                            .insert(testSubcategories)
+                                            .then(() => {
+                                                return db
+                                                    .into('budget_transactions')
+                                                    .insert(testTransactions)
+                                            })
                                     })
                             })
                     })
@@ -135,25 +177,35 @@ describe('Categories Endpoints', () => {
                 const expectedSubcategories = testSubcategories.filter(s => s.category_id !== idToDelete)
                 return supertest(app)
                     .delete(`/api/categories/${idToDelete}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(204)
                     .then(() => {
                         return supertest(app)
                             .get(`/api/categories`)
+                            .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(200, expectedCategories)
                     })
                     .then(() => {
                         return supertest(app)
                             .get(`/api/subcategories`)
+                            .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(200, expectedSubcategories)
                     })
             })
         })
 
         context(`Given categories table is empty`, () => {
+            beforeEach('insert Users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 404`, () => {
                 const idToDelete = 9999
                 return supertest(app)
                     .delete(`/api/categories/${idToDelete}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404)
             })
         })

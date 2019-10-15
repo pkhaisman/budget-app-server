@@ -1,6 +1,7 @@
 const path = require('path')
 const express = require('express')
 const SubcategoriesService = require('./subcategories-service')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const subcategoriesRouter = express.Router()
 const bodyParser = express.json()
@@ -13,6 +14,7 @@ const serializeSubcategory = subcategory => ({
 
 subcategoriesRouter
     .route('/')
+    .all(requireAuth)
     .get((req, res, next) => {
         SubcategoriesService.getAllSubcategories(req.app.get('db'))
             .then(subcategories => {
@@ -33,6 +35,8 @@ subcategoriesRouter
                 })
             }
 
+        newSubcategory.user_id = req.user.id
+
         SubcategoriesService.addSubcategory(
             req.app.get('db'),
             newSubcategory
@@ -48,6 +52,7 @@ subcategoriesRouter
 
 subcategoriesRouter
     .route('/:id')
+    .all(requireAuth)
     .get((req, res, next) => {
         SubcategoriesService.getById(req.app.get('db'), req.params.id)
             .then(subcategory => {

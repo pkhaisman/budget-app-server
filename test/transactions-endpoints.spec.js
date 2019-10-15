@@ -1,10 +1,10 @@
 const knex = require('knex')
 const app = require('../src/app')
-const { makeFixtures } = require('./test-helpers')
+const { makeFixtures, makeAuthHeader } = require('./test-helpers')
 
 describe('Transactions Endpoint', () => {
     let db
-    const { testAccounts, testCategories, testSubcategories, testTransactions } = makeFixtures()
+    const { testUsers, testAccounts, testCategories, testSubcategories, testTransactions } = makeFixtures()
 
     before('make knex instance', () => {
         db = knex({
@@ -14,31 +14,35 @@ describe('Transactions Endpoint', () => {
         app.set('db', db)
     })
 
-    before('clean tables', () => db.raw('TRUNCATE budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
+    before('clean tables', () => db.raw('TRUNCATE budget_users, budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
     
-    afterEach('clean tables', () => db.raw('TRUNCATE budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
+    afterEach('clean tables', () => db.raw('TRUNCATE budget_users, budget_accounts, budget_transactions, budget_categories, budget_subcategories RESTART IDENTITY CASCADE'))
 
     after('disconnect from db', () => db.destroy())
 
     describe('GET /api/transactions', () => {
         context('Given transactions table has data', () => {
-            // is there a better way to do this?
             beforeEach('insert transactions', () => {
                 return db
-                    .into('budget_accounts')
-                    .insert(testAccounts)
+                    .into('budget_users')
+                    .insert(testUsers)
                     .then(() => {
                         return db
-                            .into('budget_categories')
-                            .insert(testCategories)
+                            .into('budget_accounts')
+                            .insert(testAccounts)
                             .then(() => {
                                 return db
-                                    .into('budget_subcategories')
-                                    .insert(testSubcategories)
+                                    .into('budget_categories')
+                                    .insert(testCategories)
                                     .then(() => {
                                         return db
-                                            .into('budget_transactions')
-                                            .insert(testTransactions)
+                                            .into('budget_subcategories')
+                                            .insert(testSubcategories)
+                                            .then(() => {
+                                                return db
+                                                    .into('budget_transactions')
+                                                    .insert(testTransactions)
+                                            })
                                     })
                             })
                     })
@@ -47,16 +51,24 @@ describe('Transactions Endpoint', () => {
             it('responds with 200 and all transactions', () => {
                 return supertest(app)
                     .get('/api/transactions')
-                    .query({ month: 9, year: 2019 })
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
+                    // .query({ month: 9, year: 2019 })
                     .expect(200, testTransactions)
             })
         })
 
         context('Given transactions table is empty', () => {
+            beforeEach('insert users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
                     .get(`/api/transactions`)
-                    .query({ month: 9, year: 2019 })
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
+                    // .query({ month: 9, year: 2019 })
                     .expect(200, [])
             })
         })
@@ -66,20 +78,25 @@ describe('Transactions Endpoint', () => {
         context('Given transactions table has data', () => {
             beforeEach('insert transactions', () => {
                 return db
-                    .into('budget_accounts')
-                    .insert(testAccounts)
+                    .into('budget_users')
+                    .insert(testUsers)
                     .then(() => {
                         return db
-                            .into('budget_categories')
-                            .insert(testCategories)
+                            .into('budget_accounts')
+                            .insert(testAccounts)
                             .then(() => {
                                 return db
-                                    .into('budget_subcategories')
-                                    .insert(testSubcategories)
+                                    .into('budget_categories')
+                                    .insert(testCategories)
                                     .then(() => {
                                         return db
-                                            .into('budget_transactions')
-                                            .insert(testTransactions)
+                                            .into('budget_subcategories')
+                                            .insert(testSubcategories)
+                                            .then(() => {
+                                                return db
+                                                    .into('budget_transactions')
+                                                    .insert(testTransactions)
+                                            })
                                     })
                             })
                     })
@@ -90,15 +107,23 @@ describe('Transactions Endpoint', () => {
                 const expectedTransaction = testTransactions[idToGet - 1]
                 return supertest(app)
                     .get(`/api/transactions/${idToGet}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, expectedTransaction)
             })
         })
 
         context(`Given transactions table has no data`, () => {
+            beforeEach('insert users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 404`, () => {
                 idToGet = 9999
                 return supertest(app)
                     .get(`/api/transactions/${idToGet}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404, {
                         error: {
                             message: `Transaction not found`
@@ -111,18 +136,23 @@ describe('Transactions Endpoint', () => {
     describe(`POST /api/transactions`, () => {
         beforeEach('insert transactions', () => {
             return db
-                .into('budget_accounts')
-                .insert(testAccounts)
-                .then(() => {
-                    return db
-                        .into('budget_categories')
-                        .insert(testCategories)
-                        .then(() => {
-                            return db
-                                .into('budget_subcategories')
-                                .insert(testSubcategories)
-                        })
-                })
+                    .into('budget_users')
+                    .insert(testUsers)
+                    .then(() => {
+                        return db
+                            .into('budget_accounts')
+                            .insert(testAccounts)
+                            .then(() => {
+                                return db
+                                    .into('budget_categories')
+                                    .insert(testCategories)
+                                    .then(() => {
+                                        return db
+                                            .into('budget_subcategories')
+                                            .insert(testSubcategories)
+                                    })
+                            })
+                    })
         })
 
         it(`responds with 201 and the new transaction`, () => {
@@ -138,6 +168,7 @@ describe('Transactions Endpoint', () => {
 
             return supertest(app)
                 .post(`/api/transactions`)
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newTransaction)
                 .expect(res => {
                     Object.keys(newTransaction).forEach(key => {
@@ -149,7 +180,10 @@ describe('Transactions Endpoint', () => {
                 .then(res => {
                     return supertest(app)
                         .get(`/api/transactions/${res.body.id}`)
-                        .expect(res.body)
+                        .set('Authorization', makeAuthHeader(testUsers[0]))
+                        .then((res) => {
+                            expect(res.body)
+                        })
                 })
         })
 
@@ -170,6 +204,7 @@ describe('Transactions Endpoint', () => {
 
                 return supertest(app)
                     .post(`/api/transactions`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send(transaction)
                     .expect(400, {
                         error: {
@@ -184,20 +219,25 @@ describe('Transactions Endpoint', () => {
         context(`Given transactions table has data`, () => {
             beforeEach('insert transactions', () => {
                 return db
-                    .into('budget_accounts')
-                    .insert(testAccounts)
+                    .into('budget_users')
+                    .insert(testUsers)
                     .then(() => {
                         return db
-                            .into('budget_categories')
-                            .insert(testCategories)
+                            .into('budget_accounts')
+                            .insert(testAccounts)
                             .then(() => {
                                 return db
-                                    .into('budget_subcategories')
-                                    .insert(testSubcategories)
+                                    .into('budget_categories')
+                                    .insert(testCategories)
                                     .then(() => {
                                         return db
-                                            .into('budget_transactions')
-                                            .insert(testTransactions)
+                                            .into('budget_subcategories')
+                                            .insert(testSubcategories)
+                                            .then(() => {
+                                                return db
+                                                    .into('budget_transactions')
+                                                    .insert(testTransactions)
+                                            })
                                     })
                             })
                     })
@@ -208,21 +248,30 @@ describe('Transactions Endpoint', () => {
                 const expectedTransactions = testTransactions.filter(t => t.id !== idToDelete)
                 return supertest(app)
                     .delete(`/api/transactions/${idToDelete}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(204)
                     .then(() => {
                         return supertest(app)
                             .get(`/api/transactions`)
-                            .query({ month: 9, year: 2019 })
+                            .set('Authorization', makeAuthHeader(testUsers[0]))
+                            // .query({ month: 9, year: 2019 })
                             .expect(200, expectedTransactions)
                     })
             })
         })
 
         context(`Given transactions table is empty`, () => {
+            beforeEach('insert users', () => {
+                return db
+                    .into('budget_users')
+                    .insert(testUsers)
+            })
+
             it(`responds with 404`, () => {
                 const idToDelete = 9999
                 return supertest(app)
                     .delete(`/api/transaction/${idToDelete}`)
+                    .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(404)
             })
         })

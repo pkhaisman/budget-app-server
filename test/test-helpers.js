@@ -1,60 +1,68 @@
-const knex = require('knex')
-const app = require('../src/app')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
-function makeAccountsArray() {
+function makeAccountsArray(users) {
     return [
         {
             id: 1,
             name: 'Bank',
             balance: 1000,
+            user_id: users[0].id
         },
         {
             id: 2,
             name: 'Credit',
             balance: -500,
+            user_id: users[0].id
         },
         {
             id: 3,
             name: 'Cash',
             balance: 150,
+            user_id: users[0].id
         },
     ]
 }
 
-function makeCategoriesArray() {
+function makeCategoriesArray(users) {
     return [
         {
             id: 1,
             name: 'Food',
+            user_id: users[0].id
         },
         {
             id: 2,
             name: 'Transportation',
+            user_id: users[0].id
         },
     ]
 }
 
-function makeSubcategoriesArray(categories) {
+function makeSubcategoriesArray(users, categories) {
     return [
         {
             id: 1,
             name: 'Groceries',
             category_id: categories[0].id,
+            user_id: users[0].id
         },
         {
             id: 2,
             name: 'Dining',
             category_id: categories[0].id,
+            user_id: users[0].id
         },
         {
             id: 3,
             name: 'Gas',
             category_id: categories[1].id,
+            user_id: users[0].id
         },
     ]
 }
 
-function makeTransactionsArray(accounts, subcategories) {
+function makeTransactionsArray(users, accounts, subcategories) {
     return [
         {
             id: 1,
@@ -65,6 +73,7 @@ function makeTransactionsArray(accounts, subcategories) {
             inflow: null,
             account_id: accounts[2].id,
             subcategory_id: subcategories[1].id,
+            user_id: users[0].id
         },
         {
             id: 2,
@@ -75,6 +84,7 @@ function makeTransactionsArray(accounts, subcategories) {
             inflow: null,
             account_id: accounts[0].id,
             subcategory_id: subcategories[2].id,
+            user_id: users[0].id
         },
         {
             id: 3,
@@ -85,6 +95,7 @@ function makeTransactionsArray(accounts, subcategories) {
             inflow: null,
             account_id: accounts[1].id,
             subcategory_id: subcategories[0].id,
+            user_id: users[0].id
         },
         {
             id: 4,
@@ -95,16 +106,59 @@ function makeTransactionsArray(accounts, subcategories) {
             inflow: null,
             account_id: accounts[0].id,
             subcategory_id: subcategories[0].id,
+            user_id: users[0].id
+        },
+    ]
+}
+
+function makeUsersArray() {
+    return [
+        {
+            id: 1,
+            username: 'pkhaisman',
+            password: bcrypt.hashSync('ppass', 1)
+        },
+        {
+            id: 2,
+            username: 'aborch',
+            password: bcrypt.hashSync('apass', 1)
+        },
+    ]
+}
+
+function makeUsersArrayWithStringPassword() {
+    return [
+        {
+            id: 1,
+            username: 'pkhaisman',
+            password: 'ppass'
+        },
+        {
+            id: 2,
+            username: 'aborch',
+            password: 'apass'
         },
     ]
 }
 
 function makeFixtures() {
-    const testAccounts = makeAccountsArray()
-    const testCategories = makeCategoriesArray()
-    const testSubcategories = makeSubcategoriesArray(testCategories)
-    const testTransactions = makeTransactionsArray(testAccounts, testSubcategories)
-    return { testAccounts, testCategories, testSubcategories, testTransactions }
+    const testUsers = makeUsersArray()
+    const testUsersWithStringPassword = makeUsersArrayWithStringPassword()
+    const testAccounts = makeAccountsArray(testUsers)
+    const testCategories = makeCategoriesArray(testUsers)
+    const testSubcategories = makeSubcategoriesArray(testUsers, testCategories)
+    const testTransactions = makeTransactionsArray(testUsers, testAccounts, testSubcategories)
+
+    return { testUsers, testUsersWithStringPassword, testAccounts, testCategories, testSubcategories, testTransactions }
+}
+
+function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+    const token = jwt.sign({ user_id: user.id }, secret, {
+        subject: user.username,
+        algorithm: 'HS256'
+    })
+    
+    return `Bearer ${token}`
 }
 
 module.exports = {
@@ -113,4 +167,5 @@ module.exports = {
     makeSubcategoriesArray,
     makeTransactionsArray,
     makeFixtures,
+    makeAuthHeader,
 }

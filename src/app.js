@@ -8,6 +8,8 @@ const accountsRouter = require('./accounts/accounts-router')
 const categoriesRouter = require('./categories/categories-router');
 const transactionsRouter = require('./transactions/transactions-router');
 const subcategoriesRouter = require('./subcategories/subcategories-router');
+const authRouter = require('./auth/auth-router')
+const usersRouter = require('./users/users-router')
 
 const app = express();
 
@@ -34,6 +36,8 @@ app.use('/api/accounts', accountsRouter)
 app.use('/api/categories', categoriesRouter)
 app.use('/api/transactions', transactionsRouter)
 app.use('/api/subcategories', subcategoriesRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/users', usersRouter)
 
 app.get('/', (req, res) => {
     res.send('Hello, world!');

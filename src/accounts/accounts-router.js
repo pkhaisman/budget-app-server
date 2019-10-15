@@ -1,7 +1,7 @@
 const path = require('path')
 const express = require('express')
-const uuid = require('uuid/v4')
 const AccountsService = require('../accounts/accounts-service')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const accountsRouter = express.Router()
 const bodyParser = express.json()
@@ -9,11 +9,13 @@ const bodyParser = express.json()
 const serializeAccount = account => ({
     id: account.id,
     name: account.name,
-    balance: account.balance
+    balance: account.balance,
+    user_id: account.user_id
 })
 
 accountsRouter
     .route('/')
+    .all(requireAuth)
     .get((req, res, next) => {
         AccountsService.getAllAccounts(req.app.get('db'))
             .then(accounts => {
@@ -33,6 +35,9 @@ accountsRouter
                     }
                 })
             }
+
+        // where does req.user come from?
+        newAccount.user_id = req.user.id
         
         AccountsService.addAccount(
             req.app.get('db'),
@@ -49,6 +54,7 @@ accountsRouter
 
 accountsRouter
     .route(`/:id`)
+    .all(requireAuth)
     .get((req, res, next) => {
         AccountsService.getById(req.app.get('db'), req.params.id)
             .then(account => {

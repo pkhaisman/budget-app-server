@@ -1,53 +1,10 @@
 const path = require('path')
 const express = require('express')
-const uuid = require('uuid/v4')
 const TransactionsService = require('./transactions-service')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const transactionsRouter = express.Router()
 const bodyParser = express.json()
-
-const transactions = [
-    {
-        transactionId: 1,
-        transactionDate: '',
-        transactionPayee: 'Reanimator',
-        transactionMemo: 'Coffee',
-        transactionOutflow: 5,
-        transactionInflow: null,
-        transactionAccountId: 1,
-        transactionSubcategoryId: 2
-    },
-    {
-        transactionId: 2,
-        transactionDate: '',
-        transactionPayee: 'Trader Joe`s',
-        transactionMemo: '',
-        transactionOutflow: 25,
-        transactionInflow: null,
-        transactionAccountId: 1,
-        transactionSubcategoryId: 1
-    },
-    {
-        transactionId: 5,
-        transactionDate: '',
-        transactionPayee: 'Ultimo Coffee House',
-        transactionMemo: 'Coffee',
-        transactionOutflow: 5,
-        transactionInflow: null,
-        transactionAccountId: 2,
-        transactionSubcategoryId: 2
-    },
-    {
-        transactionId: 6,
-        transactionDate: '',
-        transactionPayee: 'Whole Foods',
-        transactionMemo: '',
-        transactionOutflow: 25,
-        transactionInflow: null,
-        transactionAccountId: 2,
-        transactionSubcategoryId: 1
-    },
-]
 
 const serializeTransaction = transaction => ({
     id: transaction.id,
@@ -62,6 +19,7 @@ const serializeTransaction = transaction => ({
 
 transactionsRouter
     .route('/')
+    .all(requireAuth)
     .get((req, res, next) => {
         TransactionsService.getAllTransactions(req.app.get('db'))
             .then(transactions => {
@@ -91,6 +49,8 @@ transactionsRouter
             }
         }
 
+        newTransaction.user_id = req.user.id
+
         TransactionsService.addTransaction(
             req.app.get('db'),
             newTransaction
@@ -106,6 +66,7 @@ transactionsRouter
 
 transactionsRouter
     .route(`/:id`)
+    .all(requireAuth)
     .get((req, res, next) => {
         TransactionsService.getById(req.app.get('db'), req.params.id)
             .then(transaction => {
