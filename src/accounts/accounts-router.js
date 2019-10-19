@@ -14,10 +14,10 @@ const serializeAccount = account => ({
 })
 
 accountsRouter
-    .route('/')
+    .route('/users/:userId')
     .all(requireAuth)
     .get((req, res, next) => {
-        AccountsService.getAllAccounts(req.app.get('db'))
+        AccountsService.getAllAccounts(req.app.get('db'), req.params.userId)
             .then(accounts => {
                 res.json(accounts)
             })

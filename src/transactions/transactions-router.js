@@ -14,14 +14,15 @@ const serializeTransaction = transaction => ({
     outflow: transaction.outflow,
     inflow: transaction.inflow,
     account_id: transaction.account_id,
-    subcategory_id: transaction.subcategory_id
+    subcategory_id: transaction.subcategory_id,
+    user_id: transaction.user_id
 })
 
 transactionsRouter
-    .route('/')
+    .route('/users/:userId')
     .all(requireAuth)
     .get((req, res, next) => {
-        TransactionsService.getAllTransactions(req.app.get('db'))
+        TransactionsService.getAllTransactions(req.app.get('db'), req.params.userId)
             .then(transactions => {
                 res.json(transactions)
             })
@@ -56,7 +57,8 @@ transactionsRouter
             newTransaction
         )
             .then(transaction => {
-                res
+                console.log(transaction)
+                return res
                     .status(201)
                     .location(path.posix.join(req.originalUrl, `/${transaction.id}`))
                     .json(serializeTransaction(transaction))

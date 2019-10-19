@@ -13,10 +13,10 @@ const serializeSubcategory = subcategory => ({
 })
 
 subcategoriesRouter
-    .route('/')
+    .route('/users/:userId')
     .all(requireAuth)
     .get((req, res, next) => {
-        SubcategoriesService.getAllSubcategories(req.app.get('db'))
+        SubcategoriesService.getAllSubcategories(req.app.get('db'), req.params.userId)
             .then(subcategories => {
                 res.json(subcategories)
             })

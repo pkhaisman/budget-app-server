@@ -1,9 +1,9 @@
 const TransactionsService = {
-    getAllTransactions(knex) {
+    getAllTransactions(knex, user_id) {
         return knex
             .select('*')
             .from('budget_transactions')
-
+            .where({ user_id })
     },
     getById(knex, id) {
         return knex.from('budget_transactions').select('*').where('id', id).first()

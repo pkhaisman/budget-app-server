@@ -1,6 +1,7 @@
 const AccountsService = {
-    getAllAccounts(knex) {
-        return knex.select('*').from('budget_accounts')
+    // get accounts of user. working on passing in user_id, not username
+    getAllAccounts(knex, user_id) {
+        return knex.select('*').from('budget_accounts').where({ user_id })
     },
     getById(knex, id) {
         return knex.from('budget_accounts').select('*').where('id', id).first()

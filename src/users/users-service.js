@@ -4,6 +4,13 @@ const bcrypt = require('bcryptjs')
 const REGEX = /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&])[\S]+/
 
 const UsersService = {
+    getByUsername(knex, username) {
+        return knex
+            .from('budget_users')
+            .select('*')
+            .where({ username })
+            .first()
+    },
     hasUserWithUsername(knex, username) {
         return knex('budget_users')
             .where('username', username)

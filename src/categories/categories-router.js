@@ -12,10 +12,10 @@ const serializeCategory = category => ({
 })
 
 categoriesRouter
-    .route('/')
+    .route('/users/:userId')
     .all(requireAuth)
     .get((req, res, next) => {
-        CategoriesService.getAllCategories(req.app.get('db'))
+        CategoriesService.getAllCategories(req.app.get('db'), req.params.userId)
             .then(categories => {
                 res.json(categories)
             })
