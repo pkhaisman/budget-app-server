@@ -12,6 +12,8 @@ function requireAuth(req, res, next) {
         bearerToken = authToken.slice(7, authToken.length)
     }
 
+    console.log(bearerToken)
+
     // check if jwt secrets match
     try {
         console.log('try block')
