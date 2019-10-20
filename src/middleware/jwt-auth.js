@@ -14,6 +14,7 @@ function requireAuth(req, res, next) {
 
     // check if jwt secrets match
     try {
+        console.log('try block')
         const payload = AuthService.verifyJwt(bearerToken)
 
         AuthService.getUserWithUsername(
@@ -33,6 +34,7 @@ function requireAuth(req, res, next) {
                 next(error)
             })
     } catch (error) {
+        // DEPLOY 401 ERROR CALLED HERE
         res.status(401).json({ error: `catch Unauthorized request` })
     }
 }
