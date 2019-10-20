@@ -16,6 +16,7 @@ function requireAuth(req, res, next) {
     try {
         console.log('try block')
         const payload = AuthService.verifyJwt(bearerToken)
+        // this doesnt get logged
         console.log(payload)
         AuthService.getUserWithUsername(
             req.app.get('db'),
