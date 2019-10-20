@@ -16,7 +16,7 @@ function requireAuth(req, res, next) {
         .split(':')
 
     if (!tokenUserName || !tokenPassword) {
-        return res.status(401).json({ error: `Unauthorized request` })
+        return res.status(401).json({ error: `basic auth no user or no pass Unauthorized request` })
     }
 
     AuthService.getUserWithUsername(
@@ -25,13 +25,13 @@ function requireAuth(req, res, next) {
     )
         .then(user => {
             if (!user) {
-                return res.status(401).json({ error: 'Unauthorized request' })
+                return res.status(401).json({ error: 'no user Unauthorized request' })
             }
             
             return AuthService.comparePasswords(tokenPassword, user.password)
                 .then(passwordsMatch => {
                     if (!passwordsMatch) {
-                        return res.status(401).json({ error: 'Unauthorized request' })
+                        return res.status(401).json({ error: 'password Unauthorized request' })
                     }
 
                     req.user = user
