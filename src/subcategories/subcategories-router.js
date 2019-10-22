@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const xss = require('xss')
 const SubcategoriesService = require('./subcategories-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
@@ -8,7 +9,7 @@ const bodyParser = express.json()
 
 const serializeSubcategory = subcategory => ({
     id: subcategory.id,
-    name: subcategory.name,
+    name: xss(subcategory.name),
     category_id: subcategory.category_id
 })
 

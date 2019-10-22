@@ -12,21 +12,18 @@ function requireAuth(req, res, next) {
         bearerToken = authToken.slice(7, authToken.length)
     }
 
-    console.log(bearerToken)
+    (bearerToken)
 
     // check if jwt secrets match
     try {
-        console.log('try block')
         const payload = AuthService.verifyJwt(bearerToken)
-        // this doesnt get logged
-        console.log(payload)
         AuthService.getUserWithUsername(
             req.app.get('db'),
             payload.sub
         )
             .then(user => {
                 if (!user) {
-                    return res.status(401).json({ error: `jwt-auth no user Unauthorized request` })
+                    return res.status(401).json({ error: `Unauthorized request` })
                 }
                 
                 req.user = user
@@ -38,7 +35,7 @@ function requireAuth(req, res, next) {
             })
     } catch (error) {
         // DEPLOY 401 ERROR CALLED HERE
-        res.status(401).json({ error: `catch Unauthorized request` })
+        res.status(401).json({ error: `Unauthorized request` })
     }
 }
 

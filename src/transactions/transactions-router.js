@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const xss = require('xss')
 const TransactionsService = require('./transactions-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
@@ -9,8 +10,8 @@ const bodyParser = express.json()
 const serializeTransaction = transaction => ({
     id: transaction.id,
     date: transaction.date,
-    payee: transaction.payee,
-    memo: transaction.memo,
+    payee: xss(transaction.payee),
+    memo: xss(transaction.memo),
     outflow: transaction.outflow,
     inflow: transaction.inflow,
     account_id: transaction.account_id,
@@ -39,7 +40,7 @@ transactionsRouter
                 }
             })
         } else {
-            const requiredFieldsObject = { date, payee, account_id, subcategory_id }
+            const requiredFieldsObject = { date, account_id, subcategory_id }
             for (const [key, value] of Object.entries(requiredFieldsObject))
             if (value == null) {
                 return res.status(400).json({
@@ -57,7 +58,6 @@ transactionsRouter
             newTransaction
         )
             .then(transaction => {
-                console.log(transaction)
                 return res
                     .status(201)
                     .location(path.posix.join(req.originalUrl, `/${transaction.id}`))

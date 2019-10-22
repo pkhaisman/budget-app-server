@@ -5,6 +5,7 @@ const { makeFixtures, makeAuthHeader } = require('./test-helpers')
 describe('Transactions Endpoint', () => {
     let db
     const { testUsers, testAccounts, testCategories, testSubcategories, testTransactions } = makeFixtures()
+    const testUser = testUsers[0]
 
     before('make knex instance', () => {
         db = knex({
@@ -50,9 +51,8 @@ describe('Transactions Endpoint', () => {
 
             it('responds with 200 and all transactions', () => {
                 return supertest(app)
-                    .get('/api/transactions')
+                    .get(`/api/transactions/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
-                    // .query({ month: 9, year: 2019 })
                     .expect(200, testTransactions)
             })
         })
@@ -66,9 +66,8 @@ describe('Transactions Endpoint', () => {
 
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
-                    .get(`/api/transactions`)
+                    .get(`/api/transactions/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
-                    // .query({ month: 9, year: 2019 })
                     .expect(200, [])
             })
         })
@@ -167,7 +166,7 @@ describe('Transactions Endpoint', () => {
             }
 
             return supertest(app)
-                .post(`/api/transactions`)
+                .post(`/api/transactions/users/${testUser.id}`)
                 .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newTransaction)
                 .expect(res => {
@@ -175,7 +174,7 @@ describe('Transactions Endpoint', () => {
                         expect(res.body[key]).to.eql(newTransaction[key])
                     })
                     expect(res.body).to.have.property('id')
-                    expect(res.headers.location).to.eql(`/api/transactions/${res.body.id}`)
+                    expect(res.headers.location).to.eql(`/api/transactions/users/${testUser.id}/${res.body.id}`)
                 })
                 .then(res => {
                     return supertest(app)
@@ -187,7 +186,7 @@ describe('Transactions Endpoint', () => {
                 })
         })
 
-        const requiredFields = ['date', 'payee', 'account_id', 'subcategory_id']
+        const requiredFields = ['date', 'account_id', 'subcategory_id']
         requiredFields.forEach(field => {
             const transaction = {
                 date: '2019-09-29T04:00:00.000Z',
@@ -203,7 +202,7 @@ describe('Transactions Endpoint', () => {
                 delete transaction[field]
 
                 return supertest(app)
-                    .post(`/api/transactions`)
+                    .post(`/api/transactions/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send(transaction)
                     .expect(400, {
@@ -252,9 +251,8 @@ describe('Transactions Endpoint', () => {
                     .expect(204)
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/transactions`)
+                            .get(`/api/transactions/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsers[0]))
-                            // .query({ month: 9, year: 2019 })
                             .expect(200, expectedTransactions)
                     })
             })

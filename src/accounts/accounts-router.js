@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const xss = require('xss')
 const AccountsService = require('../accounts/accounts-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
@@ -8,7 +9,7 @@ const bodyParser = express.json()
 
 const serializeAccount = account => ({
     id: account.id,
-    name: account.name,
+    name: xss(account.name),
     balance: account.balance,
     user_id: account.user_id
 })

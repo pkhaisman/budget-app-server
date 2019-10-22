@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const xss = require('xss')
 const CategoriesService = require('./categories-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
@@ -8,7 +9,7 @@ const bodyParser = express.json()
 
 const serializeCategory = category => ({
     id: category.id,
-    name: category.name,
+    name: xss(category.name),
 })
 
 categoriesRouter

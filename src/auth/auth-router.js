@@ -22,7 +22,6 @@ AuthRouter
         )
             .then(dbUser => {
                 if (!dbUser) {
-                    console.log('username error')
                     return res.status(400).json({
                         error: `Invalid login credentials`
                     })

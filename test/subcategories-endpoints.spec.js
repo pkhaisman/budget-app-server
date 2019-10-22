@@ -5,6 +5,7 @@ const { makeFixtures, makeAuthHeader } = require('./test-helpers')
 describe('Subcategories Endpoints', () => {
     let db
     const { testUsers, testAccounts, testCategories, testTransactions, testSubcategories } = makeFixtures()
+    const testUser = testUsers[0]
 
     before('make knex instance', () => {
         db = knex({
@@ -50,7 +51,7 @@ describe('Subcategories Endpoints', () => {
 
             it(`responds with 200 and all subcategories`, () => {
                 return supertest(app)
-                    .get(`/api/subcategories`)
+                    .get(`/api/subcategories/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, testSubcategories)
             })
@@ -65,7 +66,7 @@ describe('Subcategories Endpoints', () => {
 
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
-                    .get(`/api/subcategories`)
+                    .get(`/api/subcategories/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, [])
             })
@@ -146,14 +147,14 @@ describe('Subcategories Endpoints', () => {
             }
 
             return supertest(app)
-                .post(`/api/subcategories`)
+                .post(`/api/subcategories/users/${testUser.id}`)
                 .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newSubcategory)
                 .expect(res => {
                     expect(res.body.name).to.eql(newSubcategory.name)
                     expect(res.body.category_id).to.eql(newSubcategory.category_id)
                     expect(res.body).to.have.property('id')
-                    expect(res.headers.location).to.eql(`/api/subcategories/${res.body.id}`)
+                    expect(res.headers.location).to.eql(`/api/subcategories/users/${testUser.id}/${res.body.id}`)
                 })
                 .then(res => {
                     return supertest(app)
@@ -176,7 +177,7 @@ describe('Subcategories Endpoints', () => {
                 delete subcategory[field]
 
                 return supertest(app)
-                    .post(`/api/subcategories`)
+                    .post(`/api/subcategories/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .send(subcategory)
                     .expect(400, {
@@ -225,7 +226,7 @@ describe('Subcategories Endpoints', () => {
                     .expect(204)
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/subcategories`)
+                            .get(`/api/subcategories/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(200, expectedSubcategories)
                     })

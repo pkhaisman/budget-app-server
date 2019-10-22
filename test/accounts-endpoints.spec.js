@@ -5,6 +5,7 @@ const { makeAuthHeader, makeFixtures } = require('./test-helpers')
 describe('Accounts Endpoints', () => {
     let db
     const { testUsers, testUsersWithStringPassword, testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
+    const testUser = testUsers[0]
 
     before('make knex instance', () => {
         db = knex({
@@ -49,8 +50,8 @@ describe('Accounts Endpoints', () => {
 
         const protectedEndpoints = [
             {
-                name: `GET /api/accounts`,
-                path: `/api/accounts`,
+                name: `GET /api/accounts/users/${testUser.id}`,
+                path: `/api/accounts/users/${testUser.id}`,
             },
             {
                 name: `GET /api/accounts/:account_id`,
@@ -101,7 +102,7 @@ describe('Accounts Endpoints', () => {
     
             it('responds with 200 and all accounts', () => {
                 return supertest(app)
-                    .get('/api/accounts')
+                    .get(`/api/accounts/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
                     .expect(200, testAccounts)
             })
@@ -116,7 +117,7 @@ describe('Accounts Endpoints', () => {
 
             it('responds with 200 and an empty array', () => {
                 return supertest(app)
-                    .get('/api/accounts')
+                    .get(`/api/accounts/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
                     .expect(200, [])
             })
@@ -180,7 +181,7 @@ describe('Accounts Endpoints', () => {
             }
 
             return supertest(app)
-                .post(`/api/accounts`)
+                .post(`/api/accounts/users/${testUser.id}`)
                 .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
                 .send(newAccount)
                 .expect(201)
@@ -188,7 +189,7 @@ describe('Accounts Endpoints', () => {
                     expect(res.body.name).to.eql(newAccount.name)
                     expect(res.body.balance).to.eql(newAccount.balance)
                     expect(res.body).to.have.property('id')
-                    expect(res.headers.location).to.eql(`/api/accounts/${res.body.id}`)
+                    expect(res.headers.location).to.eql(`/api/accounts/users/${testUser.id}/${res.body.id}`)
                 })
                 .then(res => {
                     return supertest(app)
@@ -209,7 +210,7 @@ describe('Accounts Endpoints', () => {
                 delete account[field]
 
                 return supertest(app)
-                    .post(`/api/accounts`)
+                    .post(`/api/accounts/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
                     .send(account)
                     .expect(400, {
@@ -259,15 +260,14 @@ describe('Accounts Endpoints', () => {
                     .expect(204)
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/accounts`)
+                            .get(`/api/accounts/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
                             .expect(200, expectedAccounts)
                     })
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/transactions`)
+                            .get(`/api/transactions/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsersWithStringPassword[0]))
-                            .query({ month: 9 , year: 2019 })
                             .expect(200, expectedTransactions)
                         })
 

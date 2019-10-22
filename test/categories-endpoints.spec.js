@@ -5,6 +5,7 @@ const { makeFixtures, makeAuthHeader } = require('./test-helpers')
 describe('Categories Endpoints', () => {
     let db
     const { testUsers, testAccounts, testTransactions, testCategories, testSubcategories } = makeFixtures()
+    const testUser = testUsers[0]
 
     before('make knex instance', () => {
         db = knex({
@@ -35,7 +36,7 @@ describe('Categories Endpoints', () => {
 
             it('responds with 200 and all categories', () => {
                 return supertest(app)
-                    .get(`/api/categories`)
+                    .get(`/api/categories/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, testCategories)
             })
@@ -50,7 +51,7 @@ describe('Categories Endpoints', () => {
 
             it(`responds with 200 and an empty array`, () => {
                 return supertest(app)
-                    .get(`/api/categories`)
+                    .get(`/api/categories/users/${testUser.id}`)
                     .set('Authorization', makeAuthHeader(testUsers[0]))
                     .expect(200, [])
             })
@@ -110,14 +111,14 @@ describe('Categories Endpoints', () => {
             }
 
             return supertest(app)
-                .post(`/api/categories`)
+                .post(`/api/categories/users/${testUser.id}`)
                 .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newCategory)
                 .expect(201)
                 .expect(res => {
                     expect(res.body.name).to.eql(newCategory.name)
                     expect(res.body).to.have.property('id')
-                    expect(res.headers.location).to.eql(`/api/categories/${res.body.id}`)
+                    expect(res.headers.location).to.eql(`/api/categories/users/${testUser.id}/${res.body.id}`)
                 })
                 .then(res => {
                     return supertest(app)
@@ -132,7 +133,7 @@ describe('Categories Endpoints', () => {
         it(`responds with 400 and an error message when 'name' is missing`, () => {
             const category = {}
             return supertest(app)
-                .post(`/api/accounts`)
+                .post(`/api/accounts/users/${testUser.id}`)
                 .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(category)
                 .expect(400, {
@@ -181,13 +182,13 @@ describe('Categories Endpoints', () => {
                     .expect(204)
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/categories`)
+                            .get(`/api/categories/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(200, expectedCategories)
                     })
                     .then(() => {
                         return supertest(app)
-                            .get(`/api/subcategories`)
+                            .get(`/api/subcategories/users/${testUser.id}`)
                             .set('Authorization', makeAuthHeader(testUsers[0]))
                             .expect(200, expectedSubcategories)
                     })
