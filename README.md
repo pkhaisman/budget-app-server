@@ -1,6 +1,6 @@
 # Budget App Server
 
-This is a boilerplate project used for starting new projects!
+This is the server for the Budget App Client!
 
 ## Set up the app on your machine
 
