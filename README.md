@@ -2,6 +2,30 @@
 
 This is the server for the Budget App Client!
 
+## Endpoints
+
+* GET all accounts:        https://fathomless-citadel-67346.herokuapp.com/api/accounts/users/:userId
+* GET all transactions :   https://fathomless-citadel-67346.herokuapp.com/api/transactions/users/:userId
+* GET all categories :     https://fathomless-citadel-67346.herokuapp.com/api/categories/users/:userId
+* GET all subcategories :  https://fathomless-citadel-67346.herokuapp.com/api/subcategories/users/:userId
+
+* GET an account:          https://fathomless-citadel-67346.herokuapp.com/api/accounts/:id
+* GET a transaction:       https://fathomless-citadel-67346.herokuapp.com/api/transactions/:id
+* GET a category:          https://fathomless-citadel-67346.herokuapp.com/api/categories/:id
+* GET a subcategory:       https://fathomless-citadel-67346.herokuapp.com/api/subcategory/:id
+* GET a user:              https://fathomless-citadel-67346.herokuapp.com/api/users/:username
+
+* POST an accounts:        https://fathomless-citadel-67346.herokuapp.com/api/accounts/users/:userId
+* POST a transactions :    https://fathomless-citadel-67346.herokuapp.com/api/transactions/users/:userId
+* POST a categories :      https://fathomless-citadel-67346.herokuapp.com/api/categories/users/:userId
+* POST a subcategories :   https://fathomless-citadel-67346.herokuapp.com/api/subcategories/users/:userId
+* POST a user:             https://fathomless-citadel-67346.herokuapp.com/api/users/:id 
+
+* DELETE an account:       https://fathomless-citadel-67346.herokuapp.com/api/accounts/:id
+* DELETE a transaction:    https://fathomless-citadel-67346.herokuapp.com/api/transactions/:id
+* DELETE a category:       https://fathomless-citadel-67346.herokuapp.com/api/categories/:id
+* DELETE a subcategory:    https://fathomless-citadel-67346.herokuapp.com/api/subcategory/:id
+
 ## Set up the app on your machine
 
 Complete the following steps to start a new project (NEW-PROJECT-NAME):
